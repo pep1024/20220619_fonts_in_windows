@@ -1,0 +1,158 @@
+---
+title: "Fonts in Windows"
+author: "Pep Porrà"
+date: "2022-06-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(extrafont)
+library(ggplot2)
+```
+
+## Goal
+
+Explore how to use all fonts available in Windows OS in R
+
+## Context
+
+Once you have the new TTF font installed in windows (using the OS function for it [microsoft](https://support.microsoft.com/en-us/windows/how-to-install-or-remove-a-font-in-windows-f12d0657-2fc8-7613-c76f-88d043b334b8), use the `extrafont` package to install the font in R.
+
+## Installing new font in windows
+
+* Download font (TTF file). Example: [Google fonts](https://fonts.google.com/specimen/Josefin+Sans?query=josefin&preview.text=jose&preview.text_type=custom)
+* Double click in the TTF font within the ZIP file downloaded
+* Click Install button
+
+## {extrafont} package
+
+Process to use a new font in R in windows using package {extrafonts}:
+
+1. Install first the font using windows operating system (reference given above)
+1. Check where the folder where the font was installed
+1. Import the font to R (using pattern parameter) with `import_font()`. 
+You will have to answer yes to the question on the console if prompt is not
+set to FALSE
+1. Load font into win device (or any other you want to use, like pdf)
+
+Reference: [Medium](https://medium.com/analytics-vidhya/5-easy-steps-to-import-new-fonts-into-r-6651bf263a07)
+
+### Example
+
+I installed Josefin Sans from [Google fonts](https://fonts.google.com/specimen/Josefin+Sans?query=josefin&preview.text=jose&preview.text_type=custom)
+using windows OS procedure [microsoft](https://support.microsoft.com/en-us/windows/how-to-install-or-remove-a-font-in-windows-f12d0657-2fc8-7613-c76f-88d043b334b8).
+
+Second step is to check where the font was installed. We use the internal function
+in extrafont package `extrafont:::ttf_find_default_path()`
+
+
+```{r}
+extrafont:::ttf_find_default_path()
+```
+
+With `list.files()`, we search in which folder of them the font you want 
+to load to R is located
+
+```{r}
+list.files(path = "C:\\windows/Fonts", pattern = "\\.ttf") |> 
+  grep(pattern = "Josefin-Sans")
+```
+```{r}
+list.files(path = "C:\\Users\\josep\\AppData\\Local/Microsoft/Windows/Fonts", 
+  pattern = "\\.ttf") |> 
+grep(pattern = "Josefin", value = TRUE)
+```
+Alternatively, you can use {systemfonts} package:
+
+```{r}
+all_my_fonts <- systemfonts::system_fonts() 
+grep(all_my_fonts$path, pattern = "Josefin", value = TRUE)  
+```
+
+Next step is to import the font to R using `extrafont::import_font()`
+
+```{r}
+extrafont::font_import(path = "C:\\Users\\josep\\AppData\\Local/Microsoft/Windows/Fonts",
+  pattern = "\\.ttf", prompt = FALSE)
+```
+
+If `prompt = FALSE` is not included, you will have to answer yes to a question 
+in your console.
+
+You can check that the font is available as follows
+
+```{r}
+extrafont::fonts()
+```
+
+Last step before using the fonts is to load the fonts into the device you are
+using `extrafont::loadfonts(device=”win”)`
+
+```{r}
+extrafont::loadfonts(device = "win")
+```
+Use `extrafont::fonts()` function to know the precise name of the font you want
+to use
+
+```{r}
+extrafont::fonts()
+```
+
+```{r}
+ggplot(mtcars, aes(x=wt, y=mpg)) + geom_point() +
+  ggtitle("Title text goes here") +
+  theme(plot.title = element_text(size = 16, family="Josefin Sans Thin"))
+```
+
+
+```{r}
+df <- data.frame(x = runif(10), y = rnorm(10))
+plot(df$x, df$y, family="Josefin Sans Thin")
+```
+
+## Problems
+
+In case of problems, you can check the following references
+
+* [issue with font_import()](https://stackoverflow.com/questions/59949572/i-cannot-import-fonts-using-font-import)
+* [Issue "No Font Name"](https://stackoverflow.com/questions/61204259/how-can-i-resolve-the-no-font-name-issue-when-importing-fonts-into-r-using-ext)
+* [GITHub extrafonts](https://github.com/wch/extrafont)
+
+Also, you can start from scratch by deleting all fonts in the extrafont database 
+with just reinstalling the extrafontdb package
+
+```{r, eval=FALSE}
+# Run it if you want to reset extrafont database
+install.packages("extrafontdb")
+```
+
+You can check that no fonts is in the database using `fonts()`
+
+```{r}
+extrafont::fonts()
+```
+
+
+Package version of Rttf2pt1.
+It seems there is an issue with last version of Rttf2pt1 (1.3.10) 
+[Issue](https://github.com/wch/Rttf2pt1/issues/10) that is solved by installing
+an older version 1.3.8
+
+Check which version you have  with
+
+```{r}
+packageVersion("Rttf2PT1")
+```
+and reinstall the older version with 
+
+```{r}
+library(remotes)
+remotes::install_version("Rttf2pt1", version = "1.3.8")
+```
+
+
